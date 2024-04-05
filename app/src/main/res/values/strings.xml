@@ -1,0 +1,47 @@
+<resources>
+    <!-- STRING NAMA APLIKASI DAN DESKRIPSI APLIKASI -->
+    <string name="app_name">Cloth_Fit</string>
+    <string name="intro_clothfit">Pilih Jenis Pakaianmu!</string>
+
+    <!-- STRING LIST BAJU -->
+    <string name="kaos">Kaos</string>
+    <string name="jaket">Jaket</string>
+    <string name="kemeja">Kemeja</string>
+    <string name="hoodie">Hoodie</string>
+
+    <!-- STRING LIST UKURAN BAJU -->
+    <string name="m">M</string>
+    <string name="l">L</string>
+    <string name="xl">XL</string>
+    <string name="xxl">XXL</string>
+
+    <!-- STRING TEXTFIELD JUMLAH PESANAN DAN HARGA -->
+    <string name="jumlah">Jumlah Pesanan</string>
+    <string name="harga">Harga</string>
+
+    <!-- STRING BUTTON HITUNG DAN RESET -->
+    <string name="hitung">Hitung</string>
+    <string name="setel_ulang">Reset</string>
+
+    <!-- STRING TOTAL HARGA DAN INPUT INVALID DAN BAGIKAN TEMPLATE-->
+    <string name="total_harga">Total Harga : %1$.2f</string>
+    <string name="masukan_tidak_valid">Tidak Boleh Kosong</string>
+    <string name="bagikan">Bagikan</string>
+    <string name="bagikan_template">
+        Jumlah Pesanan : %1$s Pcs
+        \nHarga Baju : Rp %2$s
+        \nJenis Baju : %3$s
+        \nUkuran Baju : %4$s
+        \nTotal Harga : Rp %5$s</string>
+
+    <!-- STRING ABOUT APLIKASI DAN COPYRIGHT-->
+    <string name="tentang_aplikasi">Tentang Cloth_Fit</string>
+    <string name="copyright">
+        Cloth_Fit merupakan Aplikasi Android pemesanan pakaian terkini yang memiliki banyak brand terbaik serta memudahkan penjual dalam pemesanan dan menyiapkan pakaian yang dipesan.
+        \n\n\nAplikasi ini dibuat untuk Asessment 1 Mobpro Kelas 1.
+        \nCopyright © 2021 - 2024 Jonathan Jeheskiel Tewal.
+        \nAll rights reserved.     </string>
+
+    <!-- STRING DI ABOUTSCREEN -->
+    <string name="kembali">Return</string>
+</resources>
