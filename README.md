@@ -4,4 +4,4 @@ Nama: Jonathan Jeheskiel Tewal
 
 NIM: 6706220115
 
-Kelas: 4602
+Kelas: 46-02
