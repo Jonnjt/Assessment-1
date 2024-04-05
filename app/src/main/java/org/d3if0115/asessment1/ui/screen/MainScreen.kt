@@ -99,7 +99,7 @@ fun ScreenContent(modifier: Modifier) {
     var jumlahError by rememberSaveable { mutableStateOf(false) }
 
     var harga by rememberSaveable { mutableStateOf("") }
-    val hargaError by rememberSaveable { mutableStateOf(false) }
+    var hargaError by rememberSaveable { mutableStateOf(false) }
 
     val radioOptions1 = listOf(
         stringResource(id = R.string.kaos)
@@ -322,7 +322,9 @@ fun ScreenContent(modifier: Modifier) {
             Button(
                 onClick = {
                     jumlahError = (jumlah == "" || jumlah == "0")
-                    if (jumlahError) return@Button
+                    hargaError = (harga == "" || harga == "0")
+                    if (jumlahError || hargaError) return@Button
+
 
                     totalHarga = hitungTotalHarga(jumlah.toFloat(), harga.toFloat())
                 },
