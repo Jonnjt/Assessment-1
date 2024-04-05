@@ -1,4 +1,7 @@
 **ASSESSMENT 1**
-\nNama: Jonathan Jeheskiel Tewal
-\nNIM: 6706220115
-\nKelas: 4602
+
+Nama: Jonathan Jeheskiel Tewal
+
+NIM: 6706220115
+
+Kelas: 4602
