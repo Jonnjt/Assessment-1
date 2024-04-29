@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Cloth_Fit</string>
+    <string name="app_name">MyWarbu</string>
     <string name="intro_clothfit">Pilih Jenis Pakaianmu!</string>
-    <string name="kaos">Kaos</string>
-    <string name="jaket">Jaket</string>
-    <string name="kemeja">Kemeja</string>
-    <string name="hoodie">Hoodie</string>
-    <string name="m">M</string>
-    <string name="l">L</string>
-    <string name="xl">XL</string>
-    <string name="xxl">XXL</string>
+    <string name="ayam">Ayam Goreng</string>
+    <string name="esteh">Es Teh</string>
+    <string name="indomie">Indomie</string>
+    <string name="nasgor">Nasi Goreng</string>
     <string name="jumlah">Jumlah Pesanan</string>
     <string name="harga">Harga</string>
     <string name="hitung">Hitung</string>
@@ -18,7 +14,7 @@
     <string name="masukan_tidak_valid">Tidak Boleh Kosong</string>
     <string name="bagikan">Bagikan</string>
     <string name="bagikan_template">"      Jumlah Pesanan : %1$s Pcs      \n      Harga Baju : Rp %2$s      \n      Jenis Baju : %3$s      \n      Ukuran Baju : %4$s      \n      Total Harga : Rp %5$s     "</string>
-    <string name="tentang_aplikasi">Tentang Cloth_Fit</string>
-    <string name="copyright">"Cloth_Fit merupakan Aplikasi Android pemesanan pakaian terkini yang memiliki banyak brand terbaik serta memudahkan penjual dalam pemesanan dan menyiapkan pakaian yang dipesan.            \n\n\nAplikasi ini dibuat untuk Asessment 1 Mobpro Kelas 46-02.          \nCopyright © 2021 - 2024 Jonathan Jeheskiel Tewal.          \nAll rights reserved.     "</string>
+    <string name="tentang_aplikasi">Tentang MyWarbu</string>
+    <string name="copyright">MyWarbu merupakan aplikasi pemesanan makanan dan minuman Android terbaru yang memiliki banyak makanan dan minuman terbaik dan memudahkan penjual dalam memesan dan menyiapkan menu pesanan.         Aplikasi ini dibuat untuk Warung Makan Ayam Mewek.         Copyright © 2024 - 2027 MyWarbu.          All rights reserved.</string>
     <string name="kembali">Kembali</string>
 </resources>

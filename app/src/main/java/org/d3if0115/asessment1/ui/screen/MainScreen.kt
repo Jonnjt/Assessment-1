@@ -102,27 +102,20 @@ fun ScreenContent(modifier: Modifier) {
     var hargaError by rememberSaveable { mutableStateOf(false) }
 
     val radioOptions1 = listOf(
-        stringResource(id = R.string.kaos)
+        stringResource(id = R.string.ayam)
     )
     val radioOptions2 = listOf(
-        stringResource(id = R.string.jaket)
+        stringResource(id = R.string.esteh)
     )
     val radioOptions3 = listOf(
-        stringResource(id = R.string.kemeja)
+        stringResource(id = R.string.indomie)
     )
     val radioOptions4 = listOf(
-        stringResource(id = R.string.hoodie)
+        stringResource(id = R.string.nasgor)
     )
 
-    val radioOptions = listOf(
-        stringResource(id = R.string.m),
-        stringResource(id = R.string.l),
-        stringResource(id = R.string.xl),
-        stringResource(id = R.string.xxl)
-    )
 
     var typeCloth by rememberSaveable { mutableStateOf(radioOptions1[0]) }
-    var sizeCloth by rememberSaveable { mutableStateOf(radioOptions[0]) }
     var totalHarga by rememberSaveable { mutableFloatStateOf(0f) }
 
     val context = LocalContext.current
@@ -148,7 +141,7 @@ fun ScreenContent(modifier: Modifier) {
                 Column {
                     // Options 1
                     Image(
-                        painter = painterResource(id = R.drawable.kaos),
+                        painter = painterResource(id = R.drawable.ayam),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -177,7 +170,7 @@ fun ScreenContent(modifier: Modifier) {
                 // Options 2
                 Column {
                     Image(
-                        painter = painterResource(id = R.drawable.jaket),
+                        painter = painterResource(id = R.drawable.esteh),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -208,7 +201,7 @@ fun ScreenContent(modifier: Modifier) {
                 // Options 3
                 Column {
                     Image(
-                        painter = painterResource(id = R.drawable.kemeja),
+                        painter = painterResource(id = R.drawable.indomie),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -237,7 +230,7 @@ fun ScreenContent(modifier: Modifier) {
                 // Options 4
                 Column {
                     Image(
-                        painter = painterResource(id = R.drawable.hoodie),
+                        painter = painterResource(id = R.drawable.nasgor),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -260,31 +253,6 @@ fun ScreenContent(modifier: Modifier) {
                                     .padding(16.dp)
                             )
                         }
-                    }
-                }
-            }
-        }
-        Column (
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
-        ){
-            Column {
-                Row(
-                    Modifier.height(60.dp)
-                ) {
-                    radioOptions.forEach { text ->
-                        FoodOption(
-                            label = text,
-                            isSelected = sizeCloth == text,
-                            modifier = Modifier
-                                .selectable(
-                                    selected = sizeCloth == text,
-                                    onClick = { sizeCloth = text },
-                                    role = Role.RadioButton
-                                )
-                                .padding(16.dp)
-                        )
                     }
                 }
             }
@@ -373,7 +341,7 @@ fun ScreenContent(modifier: Modifier) {
                     shareData(
                         context = context,
                         message = context.getString(R.string.bagikan_template,
-                            jumlah, harga, typeCloth, sizeCloth, totalHarga
+                            jumlah, harga, typeCloth, totalHarga
                         )
                     )
                 },

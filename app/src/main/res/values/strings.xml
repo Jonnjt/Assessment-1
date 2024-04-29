@@ -1,19 +1,14 @@
 <resources>
     <!-- STRING NAMA APLIKASI DAN DESKRIPSI APLIKASI -->
-    <string name="app_name">Cloth_Fit</string>
-    <string name="intro_clothfit">Choose Your Type of Clothing!</string>
+    <string name="app_name">MyWarbu</string>
+    <string name="intro_clothfit">Choose Your Foods and Drinks!</string>
 
     <!-- STRING LIST BAJU -->
-    <string name="kaos">T-shirt</string>
-    <string name="jaket">Jacket</string>
-    <string name="kemeja">Shirt</string>
-    <string name="hoodie">Hoodie</string>
+    <string name="ayam">Fried Chicken</string>
+    <string name="esteh">Ice Tea</string>
+    <string name="indomie">Indomie</string>
+    <string name="nasgor">Fried Rice</string>
 
-    <!-- STRING LIST UKURAN BAJU -->
-    <string name="m">M</string>
-    <string name="l">L</string>
-    <string name="xl">XL</string>
-    <string name="xxl">XXL</string>
 
     <!-- STRING TEXTFIELD JUMLAH PESANAN DAN HARGA -->
     <string name="jumlah">Order Quantity</string>
@@ -30,16 +25,12 @@
     <string name="bagikan_template">
         Order Quantity : %1$s Pcs
         \nClothes Price : Rp %2$s
-        \nClothes Type : %3$s
-        \nClothes Sizes : %4$s
-        \nTotal Price : Rp %5$s</string>
+        \nClothes Sizes : %3$s
+        \nTotal Price : Rp %4$s</string>
 
     <!-- STRING ABOUT APLIKASI DAN COPYRIGHT-->
-    <string name="tentang_aplikasi">About Cloth_Fit</string>
-    <string name="copyright">Cloth_Fit is the latest Android clothing ordering application which has many of the best brands and makes it easier for sellers to order and prepare the ordered clothes.
-        \n\n\nThis application was created for Assessment 1 Mobpro Class 46-02.
-        \nCopyright © 2021 - 2024 Jonathan Jeheskiel Tewal.
-        \nAll rights reserved.</string>
+    <string name="tentang_aplikasi">About MyWarbu</string>
+    <string name="copyright">MyWarbu is the newest Android food and drink ordering application which has lots of the best food and drinks and makes it easier for sellers to order and prepare ordered menus.            This application was created for Mewek Chicken Food Stall.          Copyright © 2024 - 2027 MyWarbu.          All rights reserved.</string>
 
     <!-- STRING DI ABOUTSCREEN -->
     <string name="kembali">Return</string>
