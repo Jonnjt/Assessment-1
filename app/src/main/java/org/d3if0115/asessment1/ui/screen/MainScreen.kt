@@ -1,69 +1,69 @@
 package org.d3if0115.asessment1.ui.screen
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.d3if0115.asessment1.R
+import org.d3if0115.asessment1.database.ArenaDb
+import org.d3if0115.asessment1.model.Arena
 import org.d3if0115.asessment1.navigation.Screen
 import org.d3if0115.asessment1.ui.theme.Asessment1Theme
+import org.d3if0115.asessment1.util.SettingsDataStore
+import org.d3if0115.asessment1.util.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavHostController) {
+
+    val dataStore = SettingsDataStore(LocalContext.current)
+    val showList by dataStore.layoutFlow.collectAsState(true)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -72,333 +72,171 @@ fun MainScreen(navController: NavHostController) {
                 },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
                     IconButton(onClick = {
-                        navController.navigate(Screen.About.route)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            dataStore.saveLayout(!showList)
+                        }
                     }) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = stringResource(id = R.string.tentang_aplikasi),
+                            painter = painterResource(
+                                if (showList) R.drawable.baseline_grid_view_24
+                                else R.drawable.baseline_view_list_24
+                            ),
+                            contentDescription = stringResource(
+                                if (showList) R.string.grid
+                                else R.string.list
+                            ),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             )
+        },
+
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Screen.FormBaru.route)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.tambah_arena),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     ) { padding ->
-        ScreenContent(Modifier.padding(padding))
+        ScreenContent(showList, Modifier.padding(padding), navController)
+    }
+
+}
+
+@Composable
+fun ScreenContent(showList: Boolean, modifier: Modifier, navController: NavHostController) {
+    val context = LocalContext.current
+    val db = ArenaDb.getInstance(context)
+    val factory = ViewModelFactory(db.dao)
+    val viewModel: MainViewModel = viewModel(factory = factory)
+    val data by viewModel.data.collectAsState()
+
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.background1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+
+    if (data.isEmpty()){
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = stringResource(id = R.string.list_kosong))
+        }
+    }
+    else {
+        if (showList) {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 84.dp)
+            ) {
+                items(data) {
+                    ListItem(arena = it) {
+                        navController.navigate(Screen.FormUbah.withId(it.id))
+                    }
+                    Divider()
+                }
+            }
+        }
+        else {
+            LazyVerticalStaggeredGrid(
+                modifier = modifier.fillMaxSize(),
+                columns = StaggeredGridCells.Fixed(2),
+                verticalItemSpacing = 8.dp,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 84.dp)
+            ) {
+                items(data) {
+                    GridItem(arena = it) {
+                        navController.navigate(Screen.FormUbah.withId(it.id))
+                    }
+                }
+            }
+        }
     }
 }
 
-@SuppressLint("StringFormatMatches", "StringFormatInvalid")
 @Composable
-fun ScreenContent(modifier: Modifier) {
-    var jumlah by rememberSaveable { mutableStateOf("") }
-    var jumlahError by rememberSaveable { mutableStateOf(false) }
-
-    var harga by rememberSaveable { mutableStateOf("") }
-    var hargaError by rememberSaveable { mutableStateOf(false) }
-
-    val radioOptions1 = listOf(
-        stringResource(id = R.string.ayam)
-    )
-    val radioOptions2 = listOf(
-        stringResource(id = R.string.esteh)
-    )
-    val radioOptions3 = listOf(
-        stringResource(id = R.string.indomie)
-    )
-    val radioOptions4 = listOf(
-        stringResource(id = R.string.nasgor)
-    )
-
-
-    var typeCloth by rememberSaveable { mutableStateOf(radioOptions1[0]) }
-    var totalHarga by rememberSaveable { mutableFloatStateOf(0f) }
-
-    val context = LocalContext.current
-
+fun ListItem(arena: Arena, onClick: () -> Unit) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = stringResource(id = R.string.intro_clothfit),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth()
+        Text(text = arena.namaCustomer,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontWeight = FontWeight.Bold
         )
+        Text(text = arena.tanggalBooking,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(text = arena.hargaBooking,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(text = arena.lapangan)
+    }
+}
+
+@Composable
+fun GridItem(arena: Arena, onClick: () -> Unit) {
+    Card (
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        border = BorderStroke(1.dp, Color.Gray)
+    ) {
         Column (
-            modifier = Modifier
-                .padding(top = 8.dp)
-        ){
-            Row {
-                Column {
-                    // Options 1
-                    Image(
-                        painter = painterResource(id = R.drawable.ayam),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions1.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Options 2
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.esteh),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions2.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Row {
-                // Options 3
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.indomie),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row(
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions3.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Options 4
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.nasgor),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions4.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = jumlah,
-            onValueChange ={ jumlah = it },
-            label = { Text(text = stringResource(R.string.jumlah))},
-            isError = jumlahError,
-            trailingIcon = { IconPicker(jumlahError,"Pcs") },
-            supportingText = { ErrorHint(jumlahError) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = harga,
-            onValueChange ={ harga = it },
-            label = { Text(text = stringResource(R.string.harga))},
-            isError = hargaError,
-            trailingIcon = { IconPicker(hargaError, "Rp") },
-            supportingText = { ErrorHint(hargaError) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Row {
-            Button(
-                onClick = {
-                    jumlahError = (jumlah == "" || jumlah == "0")
-                    hargaError = (harga == "" || harga == "0")
-                    if (jumlahError || hargaError) return@Button
-
-
-                    totalHarga = hitungTotalHarga(jumlah.toFloat(), harga.toFloat())
-                },
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding =
-                PaddingValues(
-                    horizontal = 32.dp,
-                    vertical = 16.dp
-                )
-            ) {
-                Text(text = stringResource(id = R.string.hitung))
-            }
-
-            Spacer(Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    jumlah = ""
-                    totalHarga = 0f
-                    jumlahError = false
-                },
-                modifier = Modifier
-                    .padding(top = 8.dp),
-                contentPadding =
-                PaddingValues(
-                    horizontal = 32.dp,
-                    vertical = 16.dp
-                )
-            ) {
-                Text(text = stringResource(id = R.string.setel_ulang))
-            }
-        }
-
-        if (totalHarga != 0f) {
-            Divider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 1.dp
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = arena.namaCustomer,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.Bold
             )
             Text(
-                text = stringResource(id = R.string.total_harga, totalHarga),
-                style = MaterialTheme.typography.titleLarge
+                text = arena.tanggalBooking,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-
-            Button(
-                onClick = {
-                    shareData(
-                        context = context,
-                        message = context.getString(R.string.bagikan_template,
-                            jumlah, harga, typeCloth, totalHarga
-                        )
-                    )
-                },
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
-
-            ) {
-                Text(text = stringResource(id = R.string.bagikan))
-            }
-
+            Text(
+                text = arena.hargaBooking,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(text = arena.lapangan)
         }
-    }
-}
-
-
-@Composable
-fun FoodOption(label: String, isSelected: Boolean, modifier: Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(selected = isSelected, onClick = null)
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
-
-@Composable
-fun IconPicker(isError: Boolean, unit: String) {
-    if (isError) {
-        Icon(imageVector = Icons.Filled.Warning, contentDescription = null)
-    }else {
-        Text(text = unit)
-    }
-}
-@Composable
-fun ErrorHint(isError: Boolean) {
-    if (isError) {
-        Text(text = stringResource(R.string.masukan_tidak_valid))
-    }
-}
-private fun hitungTotalHarga (jumlah: Float, harga: Float): Float {
-    return jumlah * harga
-}
-
-
-@SuppressLint("QueryPermissionsNeeded")
-private fun shareData(context: Context, message: String) {
-    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, message)
-    }
-    if (shareIntent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(shareIntent)
     }
 }
 @Preview(showBackground = true)
