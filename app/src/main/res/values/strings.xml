@@ -1,37 +1,16 @@
 <resources>
-    <!-- STRING NAMA APLIKASI DAN DESKRIPSI APLIKASI -->
-    <string name="app_name">MyWarbu</string>
-    <string name="intro_clothfit">Choose Your Foods and Drinks!</string>
-
-    <!-- STRING LIST BAJU -->
-    <string name="ayam">Fried Chicken</string>
-    <string name="esteh">Ice Tea</string>
-    <string name="indomie">Indomie</string>
-    <string name="nasgor">Fried Rice</string>
-
-
-    <!-- STRING TEXTFIELD JUMLAH PESANAN DAN HARGA -->
-    <string name="jumlah">Order Quantity</string>
-    <string name="harga">Price</string>
-
-    <!-- STRING BUTTON HITUNG DAN RESET -->
-    <string name="hitung">Count</string>
-    <string name="setel_ulang">Reset</string>
-
-    <!-- STRING TOTAL HARGA DAN INPUT INVALID DAN BAGIKAN TEMPLATE-->
-    <string name="total_harga">Total Price : %1$.2f</string>
-    <string name="masukan_tidak_valid">Can not be empty</string>
-    <string name="bagikan">Share</string>
-    <string name="bagikan_template">
-        Order Quantity : %1$s Pcs
-        \nClothes Price : Rp %2$s
-        \nClothes Sizes : %3$s
-        \nTotal Price : Rp %4$s</string>
-
-    <!-- STRING ABOUT APLIKASI DAN COPYRIGHT-->
-    <string name="tentang_aplikasi">About MyWarbu</string>
-    <string name="copyright">MyWarbu is the newest Android food and drink ordering application which has lots of the best food and drinks and makes it easier for sellers to order and prepare ordered menus.            This application was created for Mewek Chicken Food Stall.          Copyright © 2024 - 2027 MyWarbu.          All rights reserved.</string>
-
-    <!-- STRING DI ABOUTSCREEN -->
-    <string name="kembali">Return</string>
+    <string name="app_name">ItemsNote</string>
+    <string name="gambar">Gambar %1$s</string>
+    <string name="error">Gagal memuat data.. Koneksi error.</string>
+    <string name="try_again">Coba Lagi</string>
+    <string name="profil">Profil</string>
+    <string name="tutup">Tutup</string>
+    <string name="logout">Logout</string>
+    <string name="tambah_barang">Tambah Nota</string>
+    <string name="nama_barang">Nama Barang</string>
+    <string name="harga">Harga</string>
+    <string name="batal">Batal</string>
+    <string name="simpan">Simpan</string>
+    <string name="pesan_hapus">Apakah Anda Yakin?</string>
+    <string name="hapus">Hapus</string>
 </resources>

@@ -1,47 +1,48 @@
 package org.d3if0115.asessment1.ui.screen
 
-import android.annotation.SuppressLint
+import android.content.ContentResolver
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import androidx.compose.foundation.Image
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,20 +51,65 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.unit.sp
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.ClearCredentialException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.d3if0115.asessment1.BuildConfig
 import org.d3if0115.asessment1.R
-import org.d3if0115.asessment1.navigation.Screen
+import org.d3if0115.asessment1.model.Items
+import org.d3if0115.asessment1.model.User
+import org.d3if0115.asessment1.network.ApiStatus
+import org.d3if0115.asessment1.network.ItemsApi
+import org.d3if0115.asessment1.network.UserDataStore
 import org.d3if0115.asessment1.ui.theme.Asessment1Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen() {
+    val context = LocalContext.current
+    val dataStore = UserDataStore(context)
+    val user by dataStore.userFlow.collectAsState(User())
+
+    val viewModel: MainViewModel = viewModel()
+    val errorMessage by viewModel.errorMessage
+
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+    var showItemsDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var bitmap: Bitmap? by remember {
+        mutableStateOf(null)
+    }
+    val launcher = rememberLauncherForActivityResult(CropImageContract()) {
+        bitmap = getCroppedImage(context.contentResolver, it)
+        if (bitmap != null) showItemsDialog = true
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -72,340 +118,281 @@ fun MainScreen(navController: NavHostController) {
                 },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
-                    IconButton(onClick = {
-                        navController.navigate(Screen.About.route)
-                    }) {
+                    IconButton(
+                        onClick = {
+                            if (user.email.isEmpty()) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    signIn(context, dataStore)
+                                }
+                            } else {
+                                showDialog = true
+                            }
+                        }
+                    ) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = stringResource(id = R.string.tentang_aplikasi),
+                            painter = painterResource(id = R.drawable.account_circle),
+                            contentDescription = stringResource(id = R.string.profil),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             )
-        }
-    ) { padding ->
-        ScreenContent(Modifier.padding(padding))
-    }
-}
-
-@SuppressLint("StringFormatMatches", "StringFormatInvalid")
-@Composable
-fun ScreenContent(modifier: Modifier) {
-    var jumlah by rememberSaveable { mutableStateOf("") }
-    var jumlahError by rememberSaveable { mutableStateOf(false) }
-
-    var harga by rememberSaveable { mutableStateOf("") }
-    var hargaError by rememberSaveable { mutableStateOf(false) }
-
-    val radioOptions1 = listOf(
-        stringResource(id = R.string.ayam)
-    )
-    val radioOptions2 = listOf(
-        stringResource(id = R.string.esteh)
-    )
-    val radioOptions3 = listOf(
-        stringResource(id = R.string.indomie)
-    )
-    val radioOptions4 = listOf(
-        stringResource(id = R.string.nasgor)
-    )
-
-
-    var typeCloth by rememberSaveable { mutableStateOf(radioOptions1[0]) }
-    var totalHarga by rememberSaveable { mutableFloatStateOf(0f) }
-
-    val context = LocalContext.current
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(id = R.string.intro_clothfit),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Column (
-            modifier = Modifier
-                .padding(top = 8.dp)
-        ){
-            Row {
-                Column {
-                    // Options 1
-                    Image(
-                        painter = painterResource(id = R.drawable.ayam),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions1.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Options 2
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.esteh),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions2.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Row {
-                // Options 3
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.indomie),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row(
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions3.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Options 4
-                Column {
-                    Image(
-                        painter = painterResource(id = R.drawable.nasgor),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(180.dp)
-                            .padding(16.dp)
-                    )
-                    Row (
-                        Modifier.height(60.dp)
-                    ) {
-                        radioOptions4.forEach { text ->
-                            FoodOption(
-                                label = text,
-                                isSelected = typeCloth == text,
-                                modifier = Modifier
-                                    .selectable(
-                                        selected = typeCloth == text,
-                                        onClick = { typeCloth = text },
-                                        role = Role.RadioButton
-                                    )
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = jumlah,
-            onValueChange ={ jumlah = it },
-            label = { Text(text = stringResource(R.string.jumlah))},
-            isError = jumlahError,
-            trailingIcon = { IconPicker(jumlahError,"Pcs") },
-            supportingText = { ErrorHint(jumlahError) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = harga,
-            onValueChange ={ harga = it },
-            label = { Text(text = stringResource(R.string.harga))},
-            isError = hargaError,
-            trailingIcon = { IconPicker(hargaError, "Rp") },
-            supportingText = { ErrorHint(hargaError) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Row {
-            Button(
+        },
+        floatingActionButton = {
+            FloatingActionButton(
                 onClick = {
-                    jumlahError = (jumlah == "" || jumlah == "0")
-                    hargaError = (harga == "" || harga == "0")
-                    if (jumlahError || hargaError) return@Button
-
-
-                    totalHarga = hitungTotalHarga(jumlah.toFloat(), harga.toFloat())
-                },
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding =
-                PaddingValues(
-                    horizontal = 32.dp,
-                    vertical = 16.dp
-                )
-            ) {
-                Text(text = stringResource(id = R.string.hitung))
-            }
-
-            Spacer(Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    jumlah = ""
-                    totalHarga = 0f
-                    jumlahError = false
-                },
-                modifier = Modifier
-                    .padding(top = 8.dp),
-                contentPadding =
-                PaddingValues(
-                    horizontal = 32.dp,
-                    vertical = 16.dp
-                )
-            ) {
-                Text(text = stringResource(id = R.string.setel_ulang))
-            }
-        }
-
-        if (totalHarga != 0f) {
-            Divider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 1.dp
-            )
-            Text(
-                text = stringResource(id = R.string.total_harga, totalHarga),
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Button(
-                onClick = {
-                    shareData(
-                        context = context,
-                        message = context.getString(R.string.bagikan_template,
-                            jumlah, harga, typeCloth, totalHarga
+                    val option = CropImageContractOptions(
+                        null, CropImageOptions(
+                            imageSourceIncludeGallery = false,
+                            imageSourceIncludeCamera = true,
+                            fixAspectRatio = true
                         )
                     )
-                },
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
-
+                    launcher.launch(option)
+                }
             ) {
-                Text(text = stringResource(id = R.string.bagikan))
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.tambah_barang)
+                )
             }
+        }
+    ) { padding ->
+        ScreenContent(viewModel, user.email, Modifier.padding(padding))
 
+        if (showDialog) {
+            ProfileDialog(
+                user = user,
+                onDismissRequest = { showDialog = false }
+            ) {
+                CoroutineScope(Dispatchers.IO).launch { signOut(context, dataStore) }
+                showDialog = false
+            }
+        }
+        if (showItemsDialog) {
+            ItemsDialog(
+                bitmap = bitmap,
+                onDismissRequest = { showItemsDialog = false }) { namaBarang, harga ->
+                viewModel.saveData(user.email, namaBarang, harga, bitmap!!)
+                showItemsDialog = false
+            }
+        }
+        if (errorMessage != null) {
+            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+            viewModel.clearMessage()
         }
     }
 }
 
+@Composable
+fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier) {
+    val data by viewModel.data
+    val status by viewModel.status.collectAsState()
+
+    LaunchedEffect(userId) {
+        viewModel.retrieveData(userId)
+    }
+
+    when (status) {
+        ApiStatus.LOADING -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        ApiStatus.SUCCESS -> {
+            LazyVerticalGrid(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                items(data) {
+                    ListItem(items = it)
+                }
+            }
+        }
+
+        ApiStatus.FAILED -> {
+            Column(
+                modifier = modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = stringResource(id = R.string.error))
+                Button(
+                    onClick = { viewModel.retrieveData(userId) },
+                    modifier = Modifier.padding(top = 16.dp),
+                    contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
+                ) {
+                    Text(text = stringResource(id = R.string.try_again))
+                }
+            }
+        }
+    }
+
+
+}
 
 @Composable
-fun FoodOption(label: String, isSelected: Boolean, modifier: Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+fun ListItem(items: Items) {
+    val context = LocalContext.current
+    val dataStore = UserDataStore(context)
+    val user by dataStore.userFlow.collectAsState(User())
+    val viewModel: MainViewModel = viewModel()
+    var openDialog by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .border(1.dp, Color.Gray),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        RadioButton(selected = isSelected, onClick = null)
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 8.dp)
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(ItemsApi.getItemsUrl(items.imageId))
+                .crossfade(true)
+                .build(),
+            contentDescription = stringResource(id = R.string.gambar, items.namaBarang),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(id = R.drawable.loading_img),
+            error = painterResource(id = R.drawable.broken_image),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
         )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+                .background(Color(0f, 0f, 0f, 0.5f))
+                .padding(4.dp)
+                .padding(end = 10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = items.namaBarang,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text ="Rp ${items.harga}",
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+
+                    IconButton(
+                        onClick = {
+                            openDialog = true
+                        },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_delete),
+                            contentDescription = "Delete",
+                            tint = Color.White
+                        )
+                }
+            }
+        }
+    }
+    DeleteDialog(
+        openDialog = openDialog,
+        onDismissRequest = { openDialog = false },
+        onConfirmation = {
+            viewModel.deleteData(user.email, items.id)
+            openDialog = false
+        }
+    )
+}
+
+private fun getCroppedImage(
+    resolver: ContentResolver,
+    result: CropImageView.CropResult
+): Bitmap? {
+    if (!result.isSuccessful) {
+        Log.e("IMAGE", "Error: ${result.error}")
+        return null
+    }
+
+    val uri = result.uriContent ?: return null
+
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        MediaStore.Images.Media.getBitmap(resolver, uri)
+    } else {
+        val source = ImageDecoder.createSource(resolver, uri)
+        ImageDecoder.decodeBitmap(source)
     }
 }
 
-@Composable
-fun IconPicker(isError: Boolean, unit: String) {
-    if (isError) {
-        Icon(imageVector = Icons.Filled.Warning, contentDescription = null)
-    }else {
-        Text(text = unit)
+private suspend fun signIn(context: Context, dataStore: UserDataStore) {
+    val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+        .setFilterByAuthorizedAccounts(false)
+        .setServerClientId(BuildConfig.API_KEY)
+        .build()
+
+    val request: GetCredentialRequest = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+
+    try {
+        val credentialManager = CredentialManager.create(context)
+        val result = credentialManager.getCredential(context, request)
+        handleSign(result, dataStore)
+    } catch (e: GetCredentialException) {
+        Log.e("SIGN-IN", "Error: ${e.errorMessage}")
     }
-}
-@Composable
-fun ErrorHint(isError: Boolean) {
-    if (isError) {
-        Text(text = stringResource(R.string.masukan_tidak_valid))
-    }
-}
-private fun hitungTotalHarga (jumlah: Float, harga: Float): Float {
-    return jumlah * harga
 }
 
-
-@SuppressLint("QueryPermissionsNeeded")
-private fun shareData(context: Context, message: String) {
-    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, message)
-    }
-    if (shareIntent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(shareIntent)
+private suspend fun handleSign(result: GetCredentialResponse, dataStore: UserDataStore) {
+    val credential = result.credential
+    if (credential is CustomCredential &&
+        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+    ) {
+        try {
+            val googleId = GoogleIdTokenCredential.createFrom(credential.data)
+            val nama = googleId.displayName ?: ""
+            val email = googleId.id
+            val photoUrl = googleId.profilePictureUri.toString()
+            dataStore.saveData(User(nama, email, photoUrl))
+        } catch (e: GoogleIdTokenParsingException) {
+            Log.e("SIGN-IN", "Error: ${e.message}")
+        }
+    } else {
+        Log.e("SIGN-IN", "Error: credential tidak dikenali")
     }
 }
+
+private suspend fun signOut(context: Context, dataStore: UserDataStore) {
+    try {
+        val credentialManager = CredentialManager.create(context)
+        val request = ClearCredentialStateRequest()
+        credentialManager.clearCredentialState(request)
+        dataStore.saveData(User())
+    } catch (e: ClearCredentialException) {
+        Log.e("SIGN-IN", "Error: ${e.errorMessage}")
+    }
+}
+
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun ScreenPreview() {
+fun GreetingPreview() {
     Asessment1Theme {
-        MainScreen(rememberNavController())
+        MainScreen()
     }
 }
